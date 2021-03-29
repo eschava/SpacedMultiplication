@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, shrink-to-fit=no" />
+    <meta http-equiv="x-ua-compatible" content="ie=edge" />
+    <title>Spaced Multiplication Tables</title>
+    <!-- MDB icon -->
+    <link rel="icon" href="img/mdb-favicon.ico" type="image/x-icon" />
+    <!-- Font Awesome -->
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.15.2/css/all.css" />
+    <!-- Google Fonts Roboto -->
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap"
+    />
+    <!-- MDB -->
+    <link rel="stylesheet" href="css/mdb.dark.min.css" />
+	<link rel="stylesheet" href="css/bootstrap-slider.min.css" />
+	<style>
+	    .slider.slider-horizontal {
+	        margin-left: 16px;
+	    }
+
+	    .slider.slider-horizontal .slider-track {
+            height: 4px;
+        }
+
+        .slider-handle {
+            width: 16px;
+            height: 16px;
+        }
+
+		.slider-selection {
+			background: #1266f1;
+		}
+	</style>
+  </head>
+  <body>
+    <!-- Start your project here-->
+    <div class="container">
+      <div class="justify-content-center align-items-center">
+
+          <div class="card text-center">
+              <div class="card-header bg-white">Settings</div>
+              <div class="card-body">
+                  <div>A <input id="sliderA" type="text"/></div><br/>
+                  <div>B <input id="sliderB" type="text"/></div><br/>
+
+                  <button type="button" class="btn btn-primary" onclick="start()">Start</button>
+              </div>
+          </div>
+            <br/>
+          <div class="card text-center">
+              <div class="card-header bg-white">
+                  <div id="currentExercise"></div>
+                  <button type="button" class="btn btn-success" onclick="correct()">Correct</button>
+                  <button type="button" class="btn btn-danger" onclick="incorrect()">Incorrect</button>
+                  <br/>
+                  <br/>
+                  <div class="progress">
+                      <div
+                          id="progress-bar"
+                          class="progress-bar progress-bar-striped progress-bar-animated"
+                          role="progressbar"
+                          style="width: 0%"
+                          aria-valuenow="0"
+                          aria-valuemin="0"
+                          aria-valuemax="100"
+                      ></div>
+                  </div>
+              </div>
+              <div id="exercises" class="card-body"></div>
+          </div>
+      </div>
+    </div>
+    <!-- End your project here-->
+
+    <!-- MDB -->
+    <script type="text/javascript" src="js/mdb.min.js"></script>
+	<script type="text/javascript" src="js/bootstrap-slider.min.js"></script>
+    <!-- Custom scripts -->
+    <script type="text/javascript" src="js/bootstrap-slider.min.js"></script>
+    <!-- Custom scripts -->
+  </body>
+</html>
+<script type="text/javascript">
+		var sliderA = new Slider("#sliderA", { min: 1, max: 10, value: [1, 10], focus: true });
+		var sliderB = new Slider("#sliderB", { min: 1, max: 10, value: [1, 10], focus: true });
+
+        var incorrectTime = 10000;
+        var removeTime = 3000;
+
+		var elapsedTime = 0;
+		var elapsedTimeTimer = 0;
+
+		var current = "";
+		var currentIncorrect = false;
+
+		//sliderA.on("change", function(e) {alert(e.newValue[1])});
+
+		function start() {
+		    var exercises = document.getElementById('exercises');
+		    var a = sliderA.getValue();
+		    var b = sliderB.getValue();
+
+		    var exercisesList = [];
+		    for (var i = a[0]; i <= a[1]; i++) {
+		        for (var j = b[0]; j <= b[1]; j++) {
+		            var text = i + " x " + j + " = ";
+		            var div = "<div text=\"" + text + "\" manual=\"true\">" + text + "</div>";
+		            exercisesList.push(div);
+		        }
+		    }
+		    shuffle(exercisesList);
+
+            exercises.innerHTML = "";
+		    for (var i = 0; i < exercisesList.length; i++) {
+		        exercises.innerHTML += exercisesList[i];
+		    }
+
+		    window.setInterval(function() {
+		        elapsedTime += 100;
+
+		        var progressBar = document.getElementById('progress-bar');
+		        progressBar.style.width = (100 * elapsedTime / incorrectTime) + "%";
+		        progressBar.style.backgroundColor = elapsedTime > incorrectTime ? 'red' :
+		                                            elapsedTime <  removeTime ? 'green' :
+		                                            'blue';
+		    }, 100);
+
+		    next();
+		}
+
+		function next() {
+		    var exercises = document.getElementById('exercises');
+		    var nextExercise = exercises.firstChild;
+
+            var currentContainer = document.getElementById('currentExercise');
+		    current = currentContainer.innerHTML = nextExercise.getAttribute('text');
+		    currentIncorrect = nextExercise.getAttribute('incorrect');
+		    exercises.removeChild(nextExercise);
+
+		    elapsedTime = 0;
+		}
+
+		function correct() {
+		    if (elapsedTime >= incorrectTime) {
+		        incorrect();
+		    } else if (elapsedTime >= removeTime || currentIncorrect) {
+		        var exercises = document.getElementById('exercises');
+		        var lastExercise = exercises.lastChild;
+		        while (lastExercise != null) {
+                    if (lastExercise.getAttribute('manual') || lastExercise.getAttribute('time') > elapsedTime)
+                        break;
+		            lastExercise = lastExercise.previousSibling;
+		        }
+		        var element = getCurrentExerciseElement("(" + Math.round(elapsedTime / 1000) + ")");
+		        element.setAttribute('time', elapsedTime);
+		        exercises.insertBefore(element, lastExercise.nextSibling);
+		    } // else: remove
+
+		    next();
+		}
+
+		function incorrect() {
+		    var exercises = document.getElementById('exercises');
+            var insertBefore = exercises.firstChild;
+		    for(var i = 0; i < 5; i++)
+		        if (insertBefore != null)
+		            insertBefore = insertBefore.nextSibling;
+
+            var element = getCurrentExerciseElement("(incorrect)");
+            element.setAttribute('incorrect', true);
+		    exercises.insertBefore(element, insertBefore);
+
+		    next();
+		}
+
+		function getCurrentExerciseElement(suffix) {
+		    var html = "<div text=\"" + current + "\">" + current + suffix + "</div>";
+
+		    var wrapper = document.createElement('div');
+            wrapper.innerHTML = html;
+            return wrapper.firstChild;
+		}
+
+		function shuffle(array) {
+            var currentIndex = array.length, temporaryValue, randomIndex;
+
+            // While there remain elements to shuffle...
+            while (0 !== currentIndex) {
+                // Pick a remaining element...
+                randomIndex = Math.floor(Math.random() * currentIndex);
+                currentIndex -= 1;
+
+                // And swap it with the current element.
+                temporaryValue = array[currentIndex];
+                array[currentIndex] = array[randomIndex];
+                array[randomIndex] = temporaryValue;
+            }
+
+            return array;
+        }
+
+	</script>
