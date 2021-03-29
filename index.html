@@ -66,7 +66,7 @@
             <br/>
           <div id="exercisesCard" class="card text-center" style="display:none;">
               <div class="card-header bg-white">
-                  <div id="currentExercise"></div>
+                  <h2 id="currentExercise"></h2>
                   <button type="button" class="btn btn-success" onclick="correct()">Correct</button>
                   <button type="button" class="btn btn-danger" onclick="incorrect(false)">Incorrect</button>
                   <br/>
@@ -125,7 +125,7 @@
 		    var exercisesList = [];
 		    for (var i = a[0]; i <= a[1]; i++) {
 		        for (var j = b[0]; j <= b[1]; j++) {
-		            var text = i + " x " + j + " = ";
+		            var text = i + " x " + j;
 		            var div = "<div text=\"" + text + "\" manual=\"true\">" + text + "</div>";
 		            exercisesList.push(div);
 		        }
@@ -136,16 +136,6 @@
 		    for (var i = 0; i < exercisesList.length; i++) {
 		        exercises.innerHTML += exercisesList[i];
 		    }
-
-		    window.setInterval(function() {
-		        elapsedTime += 100;
-
-		        var progressBar = document.getElementById('progress-bar');
-		        progressBar.style.width = (100 * elapsedTime / incorrectTime) + "%";
-		        progressBar.style.backgroundColor = elapsedTime > incorrectTime ? 'red' :
-		                                            elapsedTime <  removeTime ? 'green' :
-		                                            'blue';
-		    }, 100);
 
 		    next();
 
@@ -158,11 +148,29 @@
 		    var nextExercise = exercises.firstChild;
 
             var currentContainer = document.getElementById('currentExercise');
-		    current = currentContainer.innerHTML = nextExercise.getAttribute('text');
+		    current = nextExercise.getAttribute('text');
+		    currentContainer.innerHTML = current + " = ?";
 		    currentIncorrect = nextExercise.getAttribute('incorrect');
 		    exercises.removeChild(nextExercise);
 
 		    elapsedTime = 0;
+
+		    if (elapsedTimeTimer == 0) {
+                elapsedTimeTimer = window.setInterval(function() {
+                    elapsedTime += 100;
+
+                    var progressBar = document.getElementById('progress-bar');
+                    progressBar.style.width = (100 * elapsedTime / incorrectTime) + "%";
+                    progressBar.style.backgroundColor = elapsedTime > incorrectTime ? 'red' :
+                                                        elapsedTime <  removeTime ? 'green' :
+                                                        'blue';
+
+                    if (elapsedTime >= incorrectTime) {
+                        window.clearInterval(elapsedTimeTimer);
+                        elapsedTimeTimer = 0;
+                    }
+                }, 100);
+		    }
 		}
 
 		function correct() {
@@ -199,7 +207,7 @@
 		}
 
 		function getCurrentExerciseElement(suffix) {
-		    var html = "<div text=\"" + current + "\">" + current + suffix + "</div>";
+		    var html = "<div text=\"" + current + "\">" + current + " " + suffix + "</div>";
 
 		    var wrapper = document.createElement('div');
             wrapper.innerHTML = html;
