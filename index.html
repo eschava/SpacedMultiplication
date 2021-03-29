@@ -34,6 +34,18 @@
 		.slider-selection {
 			background: #1266f1;
 		}
+
+		#sliderTime .slider-track-high {
+            background: red;
+        }
+
+        #sliderTime .slider-track-low {
+            background: green;
+        }
+
+        #sliderTime .slider-selection {
+            background: blue;
+        }
 	</style>
   </head>
   <body>
@@ -46,16 +58,17 @@
               <div class="card-body">
                   <div>A <input id="sliderA" type="text"/></div><br/>
                   <div>B <input id="sliderB" type="text"/></div><br/>
+                  <div>Time <input id="sliderTime" type="text"/></div><br/>
 
                   <button type="button" class="btn btn-primary" onclick="start()">Start</button>
               </div>
           </div>
             <br/>
-          <div class="card text-center">
+          <div id="exercisesCard" class="card text-center" style="display:none;">
               <div class="card-header bg-white">
                   <div id="currentExercise"></div>
                   <button type="button" class="btn btn-success" onclick="correct()">Correct</button>
-                  <button type="button" class="btn btn-danger" onclick="incorrect()">Incorrect</button>
+                  <button type="button" class="btn btn-danger" onclick="incorrect(false)">Incorrect</button>
                   <br/>
                   <br/>
                   <div class="progress">
@@ -87,9 +100,10 @@
 <script type="text/javascript">
 		var sliderA = new Slider("#sliderA", { min: 1, max: 10, value: [1, 10], focus: true });
 		var sliderB = new Slider("#sliderB", { min: 1, max: 10, value: [1, 10], focus: true });
+		var sliderTime = new Slider("#sliderTime", { "id": "sliderTime", min: 1, max: 30, value: [5, 10], focus: true });
 
         var incorrectTime = 10000;
-        var removeTime = 3000;
+        var removeTime = 5000;
 
 		var elapsedTime = 0;
 		var elapsedTimeTimer = 0;
@@ -103,6 +117,10 @@
 		    var exercises = document.getElementById('exercises');
 		    var a = sliderA.getValue();
 		    var b = sliderB.getValue();
+		    var time = sliderTime.getValue();
+
+		    removeTime = time[0] * 1000;
+		    incorrectTime = time[1] * 1000;
 
 		    var exercisesList = [];
 		    for (var i = a[0]; i <= a[1]; i++) {
@@ -130,6 +148,9 @@
 		    }, 100);
 
 		    next();
+
+		    document.getElementById("exercisesCard").style.display = 'block';
+		    document.getElementById("currentExercise").scrollIntoView();
 		}
 
 		function next() {
@@ -146,7 +167,7 @@
 
 		function correct() {
 		    if (elapsedTime >= incorrectTime) {
-		        incorrect();
+		        incorrect(true);
 		    } else if (elapsedTime >= removeTime || currentIncorrect) {
 		        var exercises = document.getElementById('exercises');
 		        var lastExercise = exercises.lastChild;
@@ -155,7 +176,7 @@
                         break;
 		            lastExercise = lastExercise.previousSibling;
 		        }
-		        var element = getCurrentExerciseElement("(" + Math.round(elapsedTime / 1000) + ")");
+		        var element = getCurrentExerciseElement("(" + Math.round(elapsedTime / 1000) + " sec)");
 		        element.setAttribute('time', elapsedTime);
 		        exercises.insertBefore(element, lastExercise.nextSibling);
 		    } // else: remove
@@ -163,14 +184,14 @@
 		    next();
 		}
 
-		function incorrect() {
+		function incorrect(timeout) {
 		    var exercises = document.getElementById('exercises');
             var insertBefore = exercises.firstChild;
 		    for(var i = 0; i < 5; i++)
 		        if (insertBefore != null)
 		            insertBefore = insertBefore.nextSibling;
 
-            var element = getCurrentExerciseElement("(incorrect)");
+            var element = getCurrentExerciseElement(timeout ? "(timeout)" : "(incorrect)");
             element.setAttribute('incorrect', true);
 		    exercises.insertBefore(element, insertBefore);
 
